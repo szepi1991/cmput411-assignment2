@@ -13,20 +13,25 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <boost/array.hpp>
 
 class SkeletonNode {
 
 private:
 	std::string name;
 	std::vector<SkeletonNode> children;
-	float offset[3];
+	boost::array<float, 3> offset;
+	unsigned myCounter;
+	static unsigned nodeCounter;
 
 public:
 	SkeletonNode(std::ifstream& descr) throw(ParseException);
-	SkeletonNode(float [3]);
+	SkeletonNode(boost::array<float, 3>);
 	virtual ~SkeletonNode();
 
 	void printNames(unsigned level);
+	void display();
+	boost::array<float, 3> getEndPoint() throw(int);
 };
 
 #endif /* SKELETONNODE_H_ */

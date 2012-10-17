@@ -13,6 +13,9 @@
 #include <algorithm>
 #include <iostream>
 
+
+#define DEBUG true
+
 // typedef boost::shared_ptr<SkeletonNode> SkeletonNodePtr;
 
 inline std::string strToUpper(std::string strToConvert) {

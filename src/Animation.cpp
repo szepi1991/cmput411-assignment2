@@ -19,6 +19,7 @@
 
 Animation::Animation(char *filename) throw(ParseException) {
 
+
 	std::ifstream infile(filename);
 	// read stuff in
 	std::string word;
@@ -43,4 +44,10 @@ Animation::Animation(char *filename) throw(ParseException) {
 Animation::~Animation() {
 	// because of shared_ptr the node that root is pointed to gets deleted.
 }
+
+void Animation::display() {
+//	std::cout << "In theory things are drawn now" << std::endl;
+	root->display();
+}
+
 

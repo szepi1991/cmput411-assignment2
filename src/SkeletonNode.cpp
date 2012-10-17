@@ -6,6 +6,12 @@
  */
 
 
+#ifdef __APPLE__
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
+
 #include "SkeletonNode.h"
 #include "tools.h"
 
@@ -36,6 +42,7 @@ void confirmParse(std::string expected, std::string got) throw(ParseException) {
  * }
  */
 SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
+	myCounter = nodeCounter++;
 	std::string token;
 	descr >> token;
 	if (token.compare("{") != 0) {
@@ -46,7 +53,8 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 		name = "no-name";
 	}
 
-	std::cout << "Parsing joint with name " << name << std::endl;
+	if (DEBUG)
+		std::cout << "Parsing joint " << name << "-" << myCounter << std::endl;
 
 	descr >> token;
 	confirmParse(token, "OFFSET");
@@ -69,7 +77,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 			confirmParse(token, "{");
 			descr >> token;
 			confirmParse(token, "OFFSET");
-			float offs[3];
+			boost::array<float, 3> offs;
 			descr >> offs[0] >> offs[1] >> offs[2];
 			children.push_back(SkeletonNode(offs));
 			descr >> token;
@@ -86,23 +94,56 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 /* Use this constructor for leaf nodes.
  */
-SkeletonNode::SkeletonNode(float offsets[]) {
+SkeletonNode::SkeletonNode(boost::array<float, 3> offsets) {
+	myCounter = nodeCounter++;
 	name = "leaf";
-	std::copy(offsets, offsets+3, offset);
-	// TODO test this!!!
-
+	if (DEBUG)
+		std::cout << "Created " << name << "-" << myCounter << std::endl;
+	offset = offsets;
 }
 
 SkeletonNode::~SkeletonNode() {
-	std::cout << name << " is now dying." << std::endl;
+	if (DEBUG)
+		std::cout << name << "-" << myCounter << " is now dying." << std::endl;
 }
+
+/* If this is a leaf then it has no endpoint .. we throw 0 */
+boost::array<float, 3> SkeletonNode::getEndPoint() throw(int) {
+	if (children.size() == 0) throw 0;
+	else return children[0].offset;
+}
+
+
+void SkeletonNode::display() {
+	if (children.size() == 0) return;
+
+	glPushMatrix();
+	// do all the drawing here
+	glTranslatef(offset[0], offset[1], offset[2]);
+	boost::array<float, 3> endP = getEndPoint();
+    glBegin(GL_LINES);
+       glVertex3f(0.0f, 0.0f, 0.0f);
+	   glVertex3f(endP[0], endP[1], endP[2]);
+    glEnd();
+    std::cout << "Draw line (0,0,0) --> ("
+    		<< endP[0] << ", " << endP[1] << ", " << endP[2] << ")." << std::endl;
+    for (unsigned i = 0; i < children.size(); ++i) {
+    	children[i].display();
+    }
+
+	glPopMatrix();
+}
+
 
 /* Prints the names of the subtree rooted at this node, with level number of
  * "- " thingies in front of it.
  */
 void SkeletonNode::printNames(unsigned level) {
 	for (unsigned i = 0; i < level; ++i) std::cout << "- ";
-	std::cout << name << std::endl;
+	std::cout << name << ": \t "
+			<< offset[0] << ", "
+			<< offset[1] << ", "
+			<< offset[2] << ", " << std::endl;
 	for (std::vector<SkeletonNode>::iterator it = children.begin();
 											it != children.end(); ++it) {
 		it->printNames(level+1);

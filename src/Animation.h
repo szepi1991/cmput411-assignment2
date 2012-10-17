@@ -17,12 +17,13 @@
 class Animation {
 private:
 	std::string filename;
-	boost::shared_ptr<SkeletonNode> root; // TODO should be shared_ptr..
+	boost::shared_ptr<SkeletonNode> root;
 public:
 	Animation(char *filename) throw(ParseException);
 	virtual ~Animation();
 
 	std::string getFileName() {return filename;}
+	void display();
 };
 
 #endif /* ANIMATION_H_ */
