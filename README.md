@@ -13,7 +13,5 @@ make
 ./motionviewer <path_to_bvh_file>
 ```
 
-#To display debugging information, as well as the local model frame (with unit length colored lines), and the global frame turn the DEBUG constant on at the beginning of the main.cpp file.
-
 --------------------
 Developed by David Szepesvari. Started October 16, 2012.

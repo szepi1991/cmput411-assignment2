@@ -9,13 +9,38 @@
  */
 
 #include "Animation.h"
+#include "SkeletonNode.h"
+#include "tools.h"
 
-Animation::Animation() {
-	// TODO Auto-generated constructor stub
+#include <fstream>
+#include <sstream>
+
+
+
+Animation::Animation(char *filename) throw(ParseException) {
+
+	std::ifstream infile(filename);
+	// read stuff in
+	std::string word;
+	while (infile >> word && word.compare("HIERARCHY") != 0) {
+	}
+	// now description starts
+	infile >> word;
+	assert( word.compare("ROOT") == 0 );
+	root.reset(new SkeletonNode(infile));
+
+	// TODO also read in the animation code
+
+	infile.close();
+
+	this->filename = filename;
+
+	std::cout << "The tree structure we read in is:" << std::endl;
+	root->printNames(0);
 
 }
 
 Animation::~Animation() {
-	// TODO Auto-generated destructor stub
+	// because of shared_ptr the node that root is pointed to gets deleted.
 }
 
