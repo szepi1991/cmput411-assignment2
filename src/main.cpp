@@ -121,9 +121,9 @@ void specialKeyInput(int key, int x, int y) {
 	if (key == GLUT_KEY_DOWN)
 		cam.moveZ(1);
 	if (key == GLUT_KEY_LEFT)
-		cam.moveX(1);
+		cam.moveX(-1);
 	if (key == GLUT_KEY_RIGHT)
-		cam.moveX(-11);
+		cam.moveX(1);
 	glutPostRedisplay();
 }
 

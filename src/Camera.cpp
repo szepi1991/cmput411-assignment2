@@ -16,7 +16,7 @@
 
 Camera::Camera() {
 	//set the default camera: looking at origin from +5 on z axis
-	eyeXP = 0, eyeYP = 0, eyeZP = 10.0;
+	eyeXP = 8.0, eyeYP = 5.0, eyeZP = 10.0;
 	centerXP = 0, centerYP = 0, centerZP = 0.0;
 	upXP = 0, upYP = 1, upZP = 0;
 
