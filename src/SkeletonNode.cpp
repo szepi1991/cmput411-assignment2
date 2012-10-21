@@ -191,12 +191,16 @@ void SkeletonNode::display(int frame = -1) {
 	glPopMatrix();
 }
 
+inline void printRepeated(std::ostream& out, unsigned reps, char const * pattern) {
+	for (unsigned i = 0; i < reps; ++i) out << pattern;
+}
 
 /* Prints the names of the subtree rooted at this node, with level number of
  * "- " thingies in front of it.
  */
 void SkeletonNode::printNames(unsigned level) {
-	for (unsigned i = 0; i < level; ++i) std::cout << "- ";
+	printRepeated(std::cout, level, "- ");
+//	for (unsigned i = 0; i < level; ++i) std::cout << "- ";
 	std::cout << name << ": \t "
 			<< offset[0] << ", "
 			<< offset[1] << ", "
@@ -206,6 +210,50 @@ void SkeletonNode::printNames(unsigned level) {
 		it->printNames(level+1);
 	}
 }
+
+/* print the tree recursively in the BVH file format, into 'out'. 'level' shows
+ * how deep in the tree this node is (we assume roots are not leaves! that wouldn't make sense)
+ *
+ * This function prints ROOT/JOINT name { .... } (or change this appropriately for leaf)
+ */
+void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) {
+	printRepeated(out, level, "\t");
+	if (children.size() == 0) {
+		out << "End Site" << std::endl;
+		printRepeated(out, level, "\t");
+		out << "{" << std::endl;
+		level++;
+		printRepeated(out, level, "\t");
+		out << "OFFSET " << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
+	} else {
+		if (level == 0) {
+			out << "ROOT ";
+		} else {
+			out << "JOINT ";
+		}
+		out << name << std::endl;
+		printRepeated(out, level, "\t");
+		out << "{" << std::endl;
+		level++;
+		printRepeated(out, level, "\t");
+		out << "OFFSET " << offset[0] << " " << offset[1] << " " << offset[2] << std::endl;
+		printRepeated(out, level, "\t");
+		out << "CHANNELS " << channelNum << " ";
+		if (channelNum == 6) {
+			out << "Xposition Yposition Zposition ";
+		}
+		// and we always have the rotations
+		out << "Zrotation Yrotation Xrotation" << std::endl;
+		for (std::vector<SkeletonNode>::iterator it = children.begin();
+												it != children.end(); ++it) {
+			it->printTreeBVH(out, level); // level was already incremented
+		}
+	}
+	// level was incremented
+	printRepeated(out, level-1, "\t");
+	out << "}" << std::endl;
+}
+
 
 // generates the transformation matrix for this frame
 void MotionFrame::genMatrix() {

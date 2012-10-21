@@ -13,9 +13,9 @@
 
 class Camera {
 private:
-	double eyeXP, eyeYP, eyeZP;
-	double centerXP, centerYP, centerZP;
-	double upXP, upYP, upZP;
+//	double eyeXP, eyeYP, eyeZP;
+//	double centerXP, centerYP, centerZP;
+//	double upXP, upYP, upZP;
 
 	double cameraTrans[16];
 
@@ -28,8 +28,6 @@ public:
 	void view();
 	void reset();
 
-//	void updateMatrix();
-//	void updateState();
 	void rotateCamera(double angle, double x, double y, double z);
 	void translateCamera(double x, double y, double z);
 };

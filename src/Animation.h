@@ -23,14 +23,14 @@ private:
 
 	// these next 2 should NOT change!
 	unsigned frameNum;
-	float stdFrameTime; // in seconds
+	double stdFrameTime; // in seconds
 
-	float curFrameFrac; // which frame are we at exactly
+	double curFrameFrac; // which frame are we at exactly
 	unsigned curFrameWhole; // basically curFrameFrac rounded
 
 	bool animating;
-	float stdFPS;
-	float virtFPS;
+	double stdFPS;
+	double virtFPS;
 
 	boost::posix_time::ptime lastTime;
 
@@ -39,10 +39,10 @@ public:
 	virtual ~Animation();
 
 	std::string getFileName() {return filename;}
-	float getStdFrameTime() {return stdFrameTime;}
+	double getStdFrameTime() {return stdFrameTime;}
 	float getVirtualFPS() { return virtFPS; }
 	void display();
-	void addToTime(float timediff);
+	void addToTime(double timediff);
 
 	void startAnim() {
 		animating = true;
@@ -55,8 +55,9 @@ public:
 	}
 	void stopAnim() {animating = false;}
 	void reset();
+	void addFPS(double diff) {virtFPS += diff;}
 
-	void addFPS(float diff) {virtFPS += diff;}
+	void outputBVH(std::ostream&);
 };
 
 #endif /* ANIMATION_H_ */

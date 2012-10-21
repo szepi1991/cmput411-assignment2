@@ -43,6 +43,13 @@ public:
 	void genMatrix();
 	void applyTransformation();
 	void printMatrix();
+	void printFrame(std::ostream& out) {
+		// using assumption here
+		if (channels == 6) {
+			out << xPos << " " << yPos << " " << zPos << " ";
+		}
+		out << zRot << " " << yRot << " " << xRot << " ";
+	}
 };
 
 class SkeletonNode {
@@ -67,6 +74,16 @@ public:
 	void display(int);
 	void addAnimationFrame(std::ifstream& descr);
 	boost::array<float, 3> getEndPoint() throw(int);
+
+	void printTreeBVH(std::ostream& out, unsigned level);
+	void printFrameBVH(std::ostream& out, unsigned frame) {
+		if (children.size() == 0) return; // leafs have no animation transformations
+		motion[frame].printFrame(out);
+		for (std::vector<SkeletonNode>::iterator it = children.begin();
+												it != children.end(); ++it) {
+			it->printFrameBVH(out, frame);
+		}
+	}
 };
 
 #endif /* SKELETONNODE_H_ */

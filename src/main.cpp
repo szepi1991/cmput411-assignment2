@@ -147,6 +147,13 @@ void keyInput(unsigned char key, int x, int y) {
 	case '-':
 		anim->addFPS(-10);
 		break;
+	case 'w':
+	{
+		ofstream outfile("output.bvh");
+		anim->outputBVH(outfile);
+		outfile.close();
+		break;
+	}
 	default:
 		cam.control(key);
 		break;

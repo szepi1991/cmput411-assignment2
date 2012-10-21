@@ -67,14 +67,16 @@ Animation::Animation(char *filename) throw(ParseException) {
 	// there should be nothing more in the file
 	while (!infile.eof()) {
 		std::getline(infile, word);
-		confirmParse("", word);
+		if (word.begin() != remove_if(word.begin(), word.end(), isspace)) {
+			std::cerr << "Unexpected term '" << word << "' at the end of the bvh file" << std::endl;
+		}
 	}
 	infile.close();
 
 	this->filename = filename;
 	animating = false;
 
-	stdFPS = floor((1.0f / stdFrameTime) + 0.5);
+	stdFPS = floor((1.0 / stdFrameTime) + 0.5);
 	virtFPS = stdFPS;
 
 	curFrameWhole = -1;
@@ -86,7 +88,7 @@ Animation::~Animation() {
 }
 
 // timediff is in milliseconds!!
-void Animation::addToTime(float timeDiff) {
+void Animation::addToTime(double timeDiff) {
 	if (DEBUG) 	std::cout << "Elapsed time (ms): " << timeDiff << std::endl;
 	timeDiff /= SECtoMSEC; // now timeDiff is in seconds
 
@@ -112,6 +114,30 @@ void Animation::reset() {
 	virtFPS = stdFPS;
 }
 
+void Animation::outputBVH(std::ostream& out) {
+	out << std::fixed;
+	out.precision(5);
+	// first output the tree
+	out << "HIERARCHY" << std::endl;
+	for (std::vector<SkeletonNode>::iterator rootIt = roots.begin();
+										rootIt != roots.end(); ++rootIt) {
+		rootIt->printTreeBVH(out, 0);
+	}
+
+	// now output the animation code
+	out.precision(7);
+	out << "MOTION" << std::endl;
+	out << "Frames: " << frameNum << std::endl;
+	out << "Frame Time: " << stdFrameTime << std::endl;
+	out.precision(4);
+	for (unsigned f = 0; f < frameNum; ++f) {
+		for (std::vector<SkeletonNode>::iterator rootIt = roots.begin();
+											rootIt != roots.end(); ++rootIt) {
+			rootIt->printFrameBVH(out, f);
+		}
+		out << std::endl;
+	}
+}
 
 // displays the current frame (that has been already calculated from curTime)
 void Animation::display() {
@@ -119,7 +145,7 @@ void Animation::display() {
 	boost::posix_time::ptime curTime = boost::posix_time::microsec_clock::universal_time();
 	if (animating) {
 		boost::posix_time::time_duration dur = curTime - lastTime;
-		addToTime( dur.total_milliseconds() ); // automatically converted to float
+		addToTime( dur.total_milliseconds() ); // automatically converted to double
 	}
 	lastTime = curTime;
 
