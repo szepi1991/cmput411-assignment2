@@ -15,7 +15,7 @@
 
 
 #define DEBUG true
-#define SECtoMSEC 1000
+#define SECtoMSEC 1000.0f
 
 
 // typedef boost::shared_ptr<SkeletonNode> SkeletonNodePtr;

@@ -219,7 +219,6 @@ void MotionFrame::genMatrix() {
 	glRotatef(xRot, 1.0, 0.0, 0.0);
 	glGetFloatv(GL_MODELVIEW_MATRIX, modelTrans); // save new rotation
 	glPopMatrix(); // reset modelview to original settings
-	// TODO this needs testing
 
 	if (DEBUG) printMatrix();
 
@@ -239,7 +238,6 @@ void MotionFrame::printMatrix() {
 // applies the transformation matrix corresponding to this frame
 void MotionFrame::applyTransformation() {
 	glMultMatrixf(modelTrans);
-	// TODO this needs testing
 }
 
 

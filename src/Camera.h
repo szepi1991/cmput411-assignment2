@@ -19,8 +19,11 @@ public:
 	Camera();
 	virtual ~Camera();
 
-	void moveX(double);
-	void moveZ(double);
+	bool controlSpec(int key);
+	bool control(unsigned char key);
+	void rotX(double);
+	void rotY(double);
+	void rotZ(double);
 	void view();
 };
 

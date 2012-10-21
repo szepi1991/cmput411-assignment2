@@ -14,12 +14,14 @@
 
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
 #else
 #  include <GL/glut.h>
 #endif
+
 
 
 Animation::Animation(char *filename) throw(ParseException) {
@@ -52,7 +54,7 @@ Animation::Animation(char *filename) throw(ParseException) {
 	confirmParse("Frame", word);
 	infile >> word;
 	confirmParse("Time:", word);
-	infile >> frameTime;
+	infile >> stdFrameTime;
 
 	// assume that the animation for the 2 roots are interleaved
 	for (unsigned f = 0; f < frameNum; ++f) {
@@ -70,11 +72,13 @@ Animation::Animation(char *filename) throw(ParseException) {
 	infile.close();
 
 	this->filename = filename;
-	timeIntoAnim = 0;
-	curFrame = -1;
-	totalTime = (double) frameNum * (double) frameTime;
 	animating = false;
 
+	stdFPS = floor((1.0f / stdFrameTime) + 0.5);
+	virtFPS = stdFPS;
+
+	curFrameWhole = -1;
+	curFrameFrac = curFrameWhole;
 }
 
 Animation::~Animation() {
@@ -82,29 +86,30 @@ Animation::~Animation() {
 }
 
 // timediff is in milliseconds!!
-void Animation::addToTime(double timeDiff) {
+void Animation::addToTime(float timeDiff) {
 	if (DEBUG) 	std::cout << "Elapsed time (ms): " << timeDiff << std::endl;
+	timeDiff /= SECtoMSEC; // now timeDiff is in seconds
 
-	timeDiff /= SECtoMSEC;
-	timeIntoAnim += timeDiff;
-	while (timeIntoAnim > totalTime) timeIntoAnim -= totalTime;
-	// figure out which frame this corresponds to:
-	// TODO at this point we ask for an actual frame.. later this will not be
-	// like so (interpolate!)
-	curFrame = ( timeIntoAnim / frameTime ) + 0.5;
-	if (DEBUG)
-		std::cout << "curtime = " << timeIntoAnim << ", frametime = " << frameTime
-			<< " --> curFrame = " << curFrame << std::endl;
+	// calculate which frame we moved ahead to - depends on virtual fps
+	curFrameFrac += timeDiff * virtFPS;
+	while (curFrameFrac > frameNum) curFrameFrac -= frameNum;
+	while (curFrameFrac < 0) curFrameFrac += frameNum; // so negative case is also handled
+
+	// figure out which real frame this corresponds to:
+	// TODO at this point we ask for an actual frame.. later this will not be like this (interpolate!)
+	curFrameWhole = ( curFrameFrac ) + 0.5;
+
 	// it might happen that due to rounding curFrame == frameNum.. make it go back to 0
-	if (curFrame == frameNum) curFrame = 0;
+	if (curFrameWhole == frameNum) curFrameWhole = 0;
 
-	assert (curFrame < frameNum);
+	assert (curFrameWhole < frameNum);
 }
 
 // reset to initial pose
 void Animation::reset() {
 	animating = false;
-	timeIntoAnim = 0; curFrame = -1;
+	curFrameWhole = -1; curFrameFrac = -1;
+	virtFPS = stdFPS;
 }
 
 
@@ -114,13 +119,13 @@ void Animation::display() {
 	boost::posix_time::ptime curTime = boost::posix_time::microsec_clock::universal_time();
 	if (animating) {
 		boost::posix_time::time_duration dur = curTime - lastTime;
-		addToTime( dur.total_milliseconds() ); // automatically converted to double
+		addToTime( dur.total_milliseconds() ); // automatically converted to float
 	}
 	lastTime = curTime;
 
-	if (DEBUG) std::cout << "Drawing Frame " << curFrame << std::endl;
+	if (DEBUG) std::cout << "Drawing Frame " << curFrameWhole << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
-		roots[i].display(curFrame);
+		roots[i].display(curFrameWhole);
 }
 
 

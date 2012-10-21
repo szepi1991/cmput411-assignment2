@@ -22,15 +22,16 @@ private:
 //	boost::shared_ptr<SkeletonNode> root;
 	std::vector<SkeletonNode> roots;
 
-	// these next 3 should NOT change!
+	// these next 2 should NOT change!
 	unsigned frameNum;
-	float frameTime;
-	double totalTime;
+	float stdFrameTime; // in seconds
 
-	unsigned curFrame;
-	float timeIntoAnim;
+	float curFrameFrac; // which frame are we at exactly
+	unsigned curFrameWhole; // basically curFrameFrac rounded
 
 	bool animating;
+	float stdFPS;
+	float virtFPS;
 
 	boost::posix_time::ptime lastTime;
 
@@ -39,13 +40,16 @@ public:
 	virtual ~Animation();
 
 	std::string getFileName() {return filename;}
-	float getFrameTime() {return frameTime;}
+	float getStdFrameTime() {return stdFrameTime;}
+	float getVirtualFPS() { return virtFPS; }
 	void display();
-	void addToTime(double timediff);
+	void addToTime(float timediff);
 
 	void startAnim() { animating = true; lastTime = boost::posix_time::microsec_clock::universal_time();}
 	void stopAnim() {animating = false;}
 	void reset();
+
+	void addFPS(float diff) {virtFPS += diff;}
 };
 
 #endif /* ANIMATION_H_ */

@@ -27,6 +27,18 @@ unsigned SkeletonNode::nodeCounter=0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
 
+
+
+// TODO switch to using 	currentTime = glutGet(GLUT_ELAPSED_TIME);
+// rather than the boost library (then we may remove like 5MB of the boost library)
+
+
+void drawText(float x, float y, float z, char const *string) {
+	glRasterPos3f(x, y, z);
+	char const *c;
+	for (c = string; *c != '\0'; c++) { glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, *c); }
+}
+
 void setup(int argc, char **argv) throw (int) {
 
 	if (argc != 2) {
@@ -55,6 +67,7 @@ void resize(int w, int h)
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
 }
 
+
 void drawAxes(float length) {
 	// draw the 3 axis (x, y, z) <--> (red, green, blue)
 	glColor3f(1.0, 0.0, 0.0);
@@ -82,17 +95,21 @@ void drawScene(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	std::stringstream fpsStream;
+	fpsStream << "virtual fps: " << anim->getVirtualFPS();
+	// Set text color.
+	glColor3f(0.0, 0.0, 0.0);
+	drawText(-29, 27, -30, fpsStream.str().c_str());
+
 	cam.view();
 
-	drawAxes(10);
+	if (DEBUG) drawAxes(10);
 
-	// Set foreground (or drawing) color.
+	// Set stickman color.
 	glColor3f(0.0, 0.0, 0.0);
-
 	anim->display();
 
 	glutSwapBuffers();
@@ -113,26 +130,26 @@ void keyInput(unsigned char key, int x, int y) {
 	case 's':
 		anim->reset();
 		break;
+	case '+':
+		anim->addFPS(10);
+		break;
+	case '-':
+		anim->addFPS(-10);
+		break;
+	default:
+		cam.control(key);
 	}
 }
 
 // Special keyboard input processing routine.
 void specialKeyInput(int key, int x, int y) {
-	if (key == GLUT_KEY_UP)
-		cam.moveZ(-1);
-	if (key == GLUT_KEY_DOWN)
-		cam.moveZ(1);
-	if (key == GLUT_KEY_LEFT)
-		cam.moveX(-1);
-	if (key == GLUT_KEY_RIGHT)
-		cam.moveX(1);
-//	glutPostRedisplay();
+	cam.controlSpec(key);
 }
 
 void animate(int arg) {
 
 	glutPostRedisplay();
-	glutTimerFunc((unsigned) (anim->getFrameTime()*SECtoMSEC), animate, 0);
+	glutTimerFunc((unsigned) (anim->getStdFrameTime()*SECtoMSEC), animate, 0);
 }
 
 
@@ -161,7 +178,7 @@ int main(int argc, char **argv) {
 	glutKeyboardFunc(keyInput);
 	glutSpecialFunc(specialKeyInput);
 //	glutIdleFunc(doWhenIdle); // we'll prob have to use this now
-	glutTimerFunc((unsigned) anim->getFrameTime()*1000000, animate, 0);
+	glutTimerFunc((unsigned) anim->getStdFrameTime()*1000000, animate, 0);
 	glutMainLoop();
 
 
