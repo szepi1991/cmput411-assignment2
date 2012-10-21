@@ -15,16 +15,21 @@ private:
 	double centerXP, centerYP, centerZP;
 	double upXP, upYP, upZP;
 
+	double cameraTrans[16];
+
 public:
 	Camera();
 	virtual ~Camera();
 
 	bool controlSpec(int key);
 	bool control(unsigned char key);
-	void rotX(double);
-	void rotY(double);
-	void rotZ(double);
 	void view();
+	void reset();
+
+	void updateMatrix();
+	void updateState();
+	void rotateCamera(double angle, double x, double y, double z);
+	void translateCamera(double x, double y, double z);
 };
 
 #endif /* CAMERA_H_ */

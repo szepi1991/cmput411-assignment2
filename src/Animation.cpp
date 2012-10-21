@@ -92,7 +92,7 @@ void Animation::addToTime(float timeDiff) {
 
 	// calculate which frame we moved ahead to - depends on virtual fps
 	curFrameFrac += timeDiff * virtFPS;
-	while (curFrameFrac > frameNum) curFrameFrac -= frameNum;
+	while (curFrameFrac > frameNum) curFrameFrac -= frameNum; // TODO make it >= ?
 	while (curFrameFrac < 0) curFrameFrac += frameNum; // so negative case is also handled
 
 	// figure out which real frame this corresponds to:

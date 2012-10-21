@@ -19,7 +19,6 @@
 class Animation {
 private:
 	std::string filename;
-//	boost::shared_ptr<SkeletonNode> root;
 	std::vector<SkeletonNode> roots;
 
 	// these next 2 should NOT change!
@@ -45,7 +44,15 @@ public:
 	void display();
 	void addToTime(float timediff);
 
-	void startAnim() { animating = true; lastTime = boost::posix_time::microsec_clock::universal_time();}
+	void startAnim() {
+		animating = true;
+		if (curFrameWhole == -1) { // we mean to compare unsigned and signed here
+			// if we are in the inital state get out of it artificially first!
+			curFrameWhole = 0;
+			curFrameFrac = 0;
+		}
+		lastTime = boost::posix_time::microsec_clock::universal_time();
+	}
 	void stopAnim() {animating = false;}
 	void reset();
 

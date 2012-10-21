@@ -27,6 +27,7 @@ unsigned SkeletonNode::nodeCounter=0;
 static boost::shared_ptr<Animation> anim;
 static Camera cam;
 
+static const unsigned SCR_WIDTH = 800, SCR_HEIGHT = 600;
 
 
 // TODO switch to using 	currentTime = glutGet(GLUT_ELAPSED_TIME);
@@ -50,6 +51,14 @@ void setup(int argc, char **argv) throw (int) {
 	try {
 		anim.reset(new Animation(argv[1]));
 		cout << "The name of the loaded file is " << anim->getFileName() << endl;
+
+		cam.reset();
+		cam.translateCamera(-10, 10, 30);
+
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+//		glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
+		gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), 1.0, 150);
 
 	} catch (ParseException& e) {
 		cerr << e.what() << endl;
@@ -159,7 +168,7 @@ int main(int argc, char **argv) {
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(800, 600);
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("box.cpp");
 
