@@ -18,6 +18,7 @@
 #include "Animation.h"
 #include "ParseException.h"
 #include "Camera.h"
+#include "tools.h"
 
 using namespace std;
 
@@ -74,7 +75,6 @@ void drawAxes(float length) {
 	glColor3f(0.0, 0.0, 0.0);
 }
 
-
 // Drawing (display) routine.
 void drawScene(void)
 {
@@ -82,23 +82,16 @@ void drawScene(void)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
 	cam.view();
 
 	drawAxes(10);
 
 	// Set foreground (or drawing) color.
 	glColor3f(0.0, 0.0, 0.0);
-
-//	//for translating the object
-//	glTranslatef(unitX, unitY, unitZ);
-//	//for rotating the object
-//	glTranslatef(0, 0, -2);
-//	glRotatef(angleX, 1.0, 0.0, 0.0);
-//	glRotatef(angleY, 0.0, 1.0, 0.0);
-//	glRotatef(angleZ, 0.0, 0.0, 1.0);
-//	glTranslatef(0, 0, 2);
-//
-//	glCallList(aModelList);
 
 	anim->display();
 
@@ -110,6 +103,15 @@ void keyInput(unsigned char key, int x, int y) {
 	switch (key) {
 	case 'q':
 		exit(0);
+		break;
+	case 'p':
+		anim->startAnim();
+		break;
+	case 'P':
+		anim->stopAnim();
+		break;
+	case 's':
+		anim->reset();
 		break;
 	}
 }
@@ -124,19 +126,19 @@ void specialKeyInput(int key, int x, int y) {
 		cam.moveX(-1);
 	if (key == GLUT_KEY_RIGHT)
 		cam.moveX(1);
-	glutPostRedisplay();
+//	glutPostRedisplay();
 }
+
+void animate(int arg) {
+
+	glutPostRedisplay();
+	glutTimerFunc((unsigned) (anim->getFrameTime()*SECtoMSEC), animate, 0);
+}
+
 
 
 int main(int argc, char **argv) {
 
-	// Initialize.
-	try {
-		setup(argc, argv);
-	} catch (int e) {
-		cerr << "The program is going to terminate now." << endl;
-		return 1;
-	}
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
@@ -146,12 +148,20 @@ int main(int argc, char **argv) {
 
 	// Set background (or clearing) color.
 	glClearColor(1.0, 1.0, 1.0, 0.0);
+	// Initialize.
+	try {
+		setup(argc, argv);
+	} catch (int e) {
+		cerr << "The program is going to terminate now." << endl;
+		return 1;
+	}
 
 	glutDisplayFunc(drawScene);
 	glutReshapeFunc(resize);
 	glutKeyboardFunc(keyInput);
 	glutSpecialFunc(specialKeyInput);
 //	glutIdleFunc(doWhenIdle); // we'll prob have to use this now
+	glutTimerFunc((unsigned) anim->getFrameTime()*1000000, animate, 0);
 	glutMainLoop();
 
 

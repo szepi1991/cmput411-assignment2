@@ -16,10 +16,6 @@
 #include "tools.h"
 
 
-void confirmParse(std::string expected, std::string got) throw(ParseException) {
-	if (expected.compare(got) != 0) throw (ParseException(expected, got));
-}
-
 /* Recursively creates the skeleton based on the info in descr.
  * Reads out just as much info from the stream as needed.
  *
@@ -54,7 +50,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 	}
 
 	if (DEBUG)
-		std::cout << "Parsing joint " << name << "-" << myCounter << std::endl;
+		std::cout << "Parsing joint " << getDescr() << std::endl;
 
 	descr >> token;
 	confirmParse(token, "OFFSET");
@@ -62,10 +58,25 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 	descr >> token;
 	confirmParse(token, "CHANNELS");
 
-	unsigned numChannels;
-	descr >> numChannels;
-	for (unsigned i = 0; i < numChannels; ++i) {
-		descr >> token; // TODO actually get this info!!
+	descr >> channelNum;
+	// we may assume that this line is either
+	// CHANNELS 6 Xposition Yposition Zposition Zrotation Yrotation Xrotation
+	// CHANNELS 3 Zrotation Yrotation Xrotation
+	if (channelNum == 6) {
+		descr >> token; confirmParse("Xposition", token);
+		descr >> token; confirmParse("Yposition", token);
+		descr >> token; confirmParse("Zposition", token);
+		descr >> token; confirmParse("Zrotation", token);
+		descr >> token; confirmParse("Yrotation", token);
+		descr >> token; confirmParse("Xrotation", token);
+	} else if (channelNum == 3) {
+		descr >> token; confirmParse("Zrotation", token);
+		descr >> token; confirmParse("Yrotation", token);
+		descr >> token; confirmParse("Xrotation", token);
+	} else {
+		std::stringstream ss;
+		ss << "CHANNELS " << channelNum;
+		throw ParseException("CHANNELS [3|6]", ss.str());
 	}
 
 	descr >> token;
@@ -94,17 +105,24 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 
 /* Use this constructor for leaf nodes.
  */
-SkeletonNode::SkeletonNode(boost::array<float, 3> offsets) {
+SkeletonNode::SkeletonNode(boost::array<float, 3> const & offsets) {
 	myCounter = nodeCounter++;
 	name = "leaf";
 	if (DEBUG)
-		std::cout << "Created " << name << "-" << myCounter << std::endl;
+		std::cout << "Created " << getDescr() << std::endl;
 	offset = offsets;
+	channelNum = 0;
+}
+
+std::string SkeletonNode::getDescr() {
+	std::stringstream ss;
+	ss << name << "-" << myCounter;
+	return ss.str();
 }
 
 SkeletonNode::~SkeletonNode() {
 	if (DEBUG)
-		std::cout << name << "-" << myCounter << " is now dying." << std::endl;
+		std::cout << getDescr() << " is now dying." << std::endl;
 }
 
 /* If this is a leaf then it has no endpoint .. we throw 0 */
@@ -113,22 +131,61 @@ boost::array<float, 3> SkeletonNode::getEndPoint() throw(int) {
 	else return children[0].offset;
 }
 
+/* Extracts the animation info for the next frame from the stream. */
+void SkeletonNode::addAnimationFrame(std::ifstream& descr) {
+	// if this is a leaf just return
+	if (children.size() == 0) return;
 
-void SkeletonNode::display() {
+	// extract info for this node
+	double xPos, yPos, zPos;
+	if (channelNum == 6) {
+		descr >> xPos >> yPos >> zPos;
+	}
+	double xRot, yRot, zRot;
+	descr >> zRot >> yRot >> xRot;
+	if (DEBUG) std::cout << "Transformation matrix " << getDescr() << ", frame " << motion.size() << std::endl;
+	if (channelNum == 6) {
+		motion.push_back(MotionFrame(zRot, yRot, xRot, xPos, yPos, zPos));
+	} else if (channelNum == 3) {
+		motion.push_back(MotionFrame(zRot, yRot, xRot));
+	} else {
+		std::cerr << "channelNum of " << getDescr() << " is " << channelNum << std::endl;
+		assert (false);
+	}
+
+	// now extract info for all the children
+	for (std::vector<SkeletonNode>::iterator it = children.begin();
+											it != children.end(); ++it) {
+		it->addAnimationFrame(descr);
+	}
+}
+
+
+/* Displays frame 'frame'. If the argument is -1, it displays the initial pose
+ * (This is the default value). */
+void SkeletonNode::display(int frame = -1) {
 	if (children.size() == 0) return;
 
 	glPushMatrix();
 	// do all the drawing here
 	glTranslatef(offset[0], offset[1], offset[2]);
+
+	if (frame >= 0) {
+		motion[frame].applyTransformation();
+	}
+
 	boost::array<float, 3> endP = getEndPoint();
     glBegin(GL_LINES);
        glVertex3f(0.0f, 0.0f, 0.0f);
 	   glVertex3f(endP[0], endP[1], endP[2]);
     glEnd();
-    std::cout << "Draw line (0,0,0) --> ("
-    		<< endP[0] << ", " << endP[1] << ", " << endP[2] << ")." << std::endl;
+//    if (DEBUG) {
+//        std::cout << "Draw line (0,0,0) --> ("
+//        		<< endP[0] << ", " << endP[1] << ", " << endP[2] << ")." << std::endl;
+//    }
+
     for (unsigned i = 0; i < children.size(); ++i) {
-    	children[i].display();
+    	children[i].display(frame);
     }
 
 	glPopMatrix();
@@ -149,5 +206,42 @@ void SkeletonNode::printNames(unsigned level) {
 		it->printNames(level+1);
 	}
 }
+
+// generates the transformation matrix for this frame
+void MotionFrame::genMatrix() {
+	// TODO later we need to use quarternions!!!!!!
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix(); // make a copy
+	glLoadIdentity(); // start from nothing
+	if (channels == 6) glTranslatef(xPos, yPos, zPos); // add new translation
+	glRotatef(zRot, 0.0, 0.0, 1.0);
+	glRotatef(yRot, 0.0, 1.0, 0.0);
+	glRotatef(xRot, 1.0, 0.0, 0.0);
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelTrans); // save new rotation
+	glPopMatrix(); // reset modelview to original settings
+	// TODO this needs testing
+
+	if (DEBUG) printMatrix();
+
+}
+
+void MotionFrame::printMatrix() {
+	std::cout << std::fixed;
+	std::cout.precision(6);
+	for (int i = 0; i < 4; ++i) {
+		for (int j = 0; j < 4; ++j) {
+			std::cout << "\t" << modelTrans[i*4+j];
+		}
+		std::cout << std::endl;
+	}
+}
+
+// applies the transformation matrix corresponding to this frame
+void MotionFrame::applyTransformation() {
+	glMultMatrixf(modelTrans);
+	// TODO this needs testing
+}
+
+
 
 
