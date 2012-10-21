@@ -20,6 +20,8 @@
 #include "Camera.h"
 #include "tools.h"
 
+#include "Matrix4x4.h"
+
 using namespace std;
 
 
@@ -111,7 +113,7 @@ void drawScene(void)
 	fpsStream << "virtual fps: " << anim->getVirtualFPS();
 	// Set text color.
 	glColor3f(0.0, 0.0, 0.0);
-	drawText(-29, 27, -30, fpsStream.str().c_str());
+	drawText(-37, 27, -30, fpsStream.str().c_str());
 
 	cam.view();
 
@@ -147,6 +149,7 @@ void keyInput(unsigned char key, int x, int y) {
 		break;
 	default:
 		cam.control(key);
+		break;
 	}
 }
 
@@ -162,9 +165,32 @@ void animate(int arg) {
 }
 
 
+void testCode() {
+	Matrix4x4<float> identity;
+	float vecf[] = { 1, 0, 2, -1};
+	cout << "identity" << endl;
+	identity.printMatrix();
+	cout << "vector" << endl;
+	identity.printVector(vecf);
+	identity.multVector(vecf);
+	cout << "multiplied" << endl;
+	identity.printVector(vecf);
+
+	double data[] = { 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 13, 14, 15, 16};
+	double vecd[] = { 1, 0, 2, -1};
+	Matrix4x4<double> matrix(data);
+	cout << "matrix" << endl;
+	matrix.printMatrix();
+	cout << "vector" << endl;
+	matrix.printVector(vecd);
+	cout << "multiplied" << endl;
+	matrix.multVector(vecd);
+	matrix.printVector(vecd);
+}
 
 int main(int argc, char **argv) {
 
+//	testCode();
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);

@@ -9,6 +9,8 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
+#include "Matrix4x4.h"
+
 class Camera {
 private:
 	double eyeXP, eyeYP, eyeZP;
@@ -26,8 +28,8 @@ public:
 	void view();
 	void reset();
 
-	void updateMatrix();
-	void updateState();
+//	void updateMatrix();
+//	void updateState();
 	void rotateCamera(double angle, double x, double y, double z);
 	void translateCamera(double x, double y, double z);
 };

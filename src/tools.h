@@ -8,6 +8,8 @@
 #ifndef TOOLS_H_
 #define TOOLS_H_
 
+#include "ParseException.h"
+
 #include <string>
 #include <cassert>
 #include <algorithm>
@@ -15,7 +17,7 @@
 
 
 #define DEBUG true
-//#define SECtoMSEC 1000.0f
+//#define SECtoMSEC 1000.0f TODO reset it to normal speed!!
 #define SECtoMSEC 10000.0f
 
 

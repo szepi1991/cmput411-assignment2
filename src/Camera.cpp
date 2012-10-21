@@ -6,6 +6,7 @@
  */
 
 #include "Camera.h"
+#include "tools.h"
 
 #include <cassert>
 #include <cmath>
@@ -26,6 +27,7 @@ Camera::Camera() {
 	eyeXP = 8.0, eyeYP = 10.0, eyeZP = 15.0;
 	centerXP = 0, centerYP = 0, centerZP = 0.0;
 	upXP = 0, upYP = 1, upZP = 0;
+
 }
 
 // this resets the camera to the origin facing in default things blabla
@@ -36,26 +38,49 @@ void Camera::reset() {
 	glLoadIdentity(); // do nothing
 	glGetDoublev(GL_MODELVIEW_MATRIX, cameraTrans); // save nothing
 	glPopMatrix(); // reset modelview to original settings
-
 }
 
 /* Sets up the view. To be called before any drawing! */
 void Camera::view() {
 	// TODO finalize later..
 	glMatrixMode(GL_MODELVIEW);
-//	glLoadIdentity();
 
-//	std::cout << std::fixed;
-//	std::cout.precision(6);
-//	for (int i = 0; i < 4; ++i) {
-//		for (int j = 0; j < 4; ++j) {
-//			std::cout << "\t" << cameraTrans[i*4+j];
+	if (DEBUG) {
+		std::cout << std::fixed;
+		std::cout.precision(6);
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				std::cout << "\t" << cameraTrans[i*4+j];
+			}
+			std::cout << std::endl;
+		}
+
+//		std::cout << "eye: " << eyeXP << " " << eyeYP << " " << eyeZP << std::endl;
+//		std::cout << "lookat: " << centerXP << " " << centerYP << " " << centerZP << std::endl;
+//		std::cout << "up: " << upXP << " " << upYP << " " << upZP << std::endl;
+//
+//		if (useMatrix) {
+//			glColor3f(1.0, 0.0, 0.0); // red
+//		} else {
+//			glColor3f(0.0, 0.0, 1.0); // blue
 //		}
-//		std::cout << std::endl;
-//	}
-	glMultMatrixd(cameraTrans);
-//	gluLookAt(eyeXP, eyeYP, eyeZP, centerXP, centerYP,
-//		centerZP, upXP, upYP, upZP);
+//		// color code this line to see whether we are using matrix or not matrix
+//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//		glBegin(GL_TRIANGLES);
+//		glVertex3f(5, 5, -10);
+//		glVertex3f(5, 6, -10);
+//		glVertex3f(6, 5, -10);
+//		glEnd();
+//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	}
+
+
+
+//	if (useMatrix)
+		glMultMatrixd(cameraTrans);
+//	else
+//		gluLookAt(eyeXP, eyeYP, eyeZP, centerXP, centerYP,
+//												centerZP, upXP, upYP, upZP);
 
 }
 
@@ -89,7 +114,7 @@ void Camera::view() {
 
 // translate the camera by the given amounts (with respect to its local frame)
 void Camera::translateCamera(double x, double y, double z) {
-	updateMatrix();
+//	updateMatrix();
 
 	glMatrixMode(GL_MODELVIEW); // make sure we have the right matrix selected
 	glPushMatrix(); // make a copy
@@ -99,12 +124,12 @@ void Camera::translateCamera(double x, double y, double z) {
 	glGetDoublev(GL_MODELVIEW_MATRIX, cameraTrans); // save new rotation
 	glPopMatrix(); // reset modelview to original settings
 
-	updateState();
+//	updateState();
 }
 
 // rotate the camera (with respect to its local frame) by the given amount, about the given vector
 void Camera::rotateCamera(double angle, double x, double y, double z) {
-	updateMatrix();
+//	updateMatrix();
 
 	glMatrixMode(GL_MODELVIEW); // make sure we have the right matrix selected
 	glPushMatrix(); // make a copy
@@ -114,24 +139,36 @@ void Camera::rotateCamera(double angle, double x, double y, double z) {
 	glGetDoublev(GL_MODELVIEW_MATRIX, cameraTrans); // save new rotation
 	glPopMatrix(); // reset modelview to original settings
 
-	updateState();
+//	updateState();
 }
 
-// updates the position, lookAt position and up vector based on the transform matrix
-void Camera::updateState() {
-	/* matrix has form:
-		R 0
-		t 1
-	*/
-	eyeXP = cameraTrans[12];
-	eyeYP = cameraTrans[14];
-	eyeZP = cameraTrans[14];
-}
-
-// updates the transform matrix based on the position, lookAt position and up vector
-void Camera::updateMatrix() {
-
-}
+//// updates the position, lookAt position and up vector based on the transform matrix
+//void Camera::updateState() {
+//	/* matrix has form:
+//		R 0
+//		t 1
+//	*/
+//	Matrix4x4<double> inv = cameraTrans.getInverse();
+//	inv = cameraTrans;
+//	eyeXP = inv.data[12];
+//	eyeYP = inv.data[13];
+//	eyeZP = inv.data[14];
+//	double lookAt[4]; std::copy(cameraTrans.e3, cameraTrans.e3+4, lookAt);
+//	cameraTrans.multVector(lookAt);
+//	centerXP = -lookAt[0] - eyeXP;
+//	centerYP = -lookAt[1] - eyeYP;
+//	centerZP = -lookAt[2] - eyeZP;
+//	double up[4]; std::copy(inv.e2, inv.e2+4, up);
+//	inv.multVector(up);
+//	upXP = up[0];
+//	upYP = up[1];
+//	upZP = up[2];
+//}
+//
+//// updates the transform matrix based on the position, lookAt position and up vector
+//void Camera::updateMatrix() {
+//
+//}
 
 
 // returns true iff the key had some effect
@@ -157,7 +194,6 @@ bool Camera::controlSpec(int key) {
 
 bool Camera::control(unsigned char key) {
 	switch (key) {
-	// TODO needs to be camera z direction!!
 	case 'I':
 		translateCamera(0, 0, 0.1);
 		break;
