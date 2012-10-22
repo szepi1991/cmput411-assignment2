@@ -34,6 +34,8 @@ private:
 
 	boost::posix_time::ptime lastTime;
 
+	float figureSize;
+
 public:
 	Animation(char *filename) throw(ParseException);
 	virtual ~Animation();
@@ -58,6 +60,8 @@ public:
 	void addFPS(double diff) {virtFPS += diff;}
 
 	void outputBVH(std::ostream&);
+	void closestFit(float&, float&, float&, float&, float&, float&);
+	float getFigureSizeBox();
 };
 
 #endif /* ANIMATION_H_ */

@@ -21,7 +21,9 @@
 #define PI 3.14159265359
 
 Camera::Camera() {
-	reset();
+	near = 3.0f;
+	far = 150.0f;
+//	reset();
 //	//set the default camera: looking at origin from +5 on z axis
 //	eyeXP = 8.0, eyeYP = 10.0, eyeZP = 15.0;
 //	centerXP = 0, centerYP = 0, centerZP = 0.0;
@@ -32,10 +34,46 @@ Camera::Camera() {
 // this resets the camera to the origin facing in default things blabla
 // NEEDS TO BE CALLED IN SETUP!!
 void Camera::reset() {
-	// TODO we can actually use the gluLookAt here and save the tansformation we get out of it
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
+	glGetDoublev(GL_MODELVIEW_MATRIX, cameraTrans); // initialize it to identity --> move to resetScene()
+	glPopMatrix();
+}
+
+// makes sure that the axis aligned box is visible in the camera (and y is up)
+void Camera::makeVisible(float xMin, float xMax,
+					float yMin, float yMax, float zMin, float zMax) {
+	// TODO we can actually use the gluLookAt here and save the tansformation we get out of it
+	float yPos = (yMax + yMin) / 2; // just the average
+	float xPos, zPos;
+	// find position (x, z) st when camera is facing along one of these axes
+	// the box is fully in the view but and as big as possible
+	float distX = xMax - xMin, distZ = zMax - zMin;
+	float xAvr = ( xMax + xMin ) / 2;
+	float zAvr = ( zMax + zMin ) / 2;
+	if (distX > distZ) {
+		xPos = xAvr;
+		zPos = zMin - distX/2;
+		// TODO check if y fits? --not--> move z more negative
+		while (distX/2 + distZ > far) { far += 10; } // make sure it's in the picture
+		// add a little extra so we can see the man from an angle
+		xPos += 20;
+		zPos -= 20;
+	} else {
+		zPos = zAvr;
+		xPos = xMin - distZ/2;
+		// TODO check if y fits? --not--> move x more negative
+		while (distZ/2 + distX > far) { far += 10; } // make sure it's in the picture
+		// add a little extra so we can see the man from an angle
+		zPos += 20;
+		xPos -= 20;
+	}
+
+	glMatrixMode(GL_MODELVIEW);
+	glPushMatrix();
+	glLoadIdentity();
+	gluLookAt(xPos, yPos, zPos, xAvr, yPos, zAvr, 0, 1.0, 0);
 	glGetDoublev(GL_MODELVIEW_MATRIX, cameraTrans); // initialize it to identity --> move to resetScene()
 	glPopMatrix();
 }

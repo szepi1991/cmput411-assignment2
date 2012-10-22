@@ -15,6 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
+#include <limits>
 
 #ifdef __APPLE__
 #  include <GLUT/glut.h>
@@ -24,7 +25,7 @@
 
 
 
-Animation::Animation(char *filename) throw(ParseException) {
+Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 
 	std::ifstream infile(filename);
 	// read stuff in
@@ -85,6 +86,43 @@ Animation::Animation(char *filename) throw(ParseException) {
 
 Animation::~Animation() {
 	// because of shared_ptr the node that root is pointed to gets deleted.
+}
+
+// calculates the axis-aligned (roughly) smallest box that will fit the animation
+void Animation::closestFit(float& xMin, float& xMax,
+					float& yMin, float& yMax, float& zMin, float& zMax) {
+	// set all the same
+//	xMin = yMin = zMin = std::numeric_limits<float>::max();
+//	xMax = yMax = zMax = - std::numeric_limits<float>::max();
+	// should encompass the initial figure
+	float figBoxSize = getFigureSizeBox();
+	xMin = yMin = zMin = -figBoxSize;
+	xMax = yMax = zMax = figBoxSize;
+
+	// initialize the vars
+	for (unsigned f = 0; f < frameNum; ++f) {
+		for (std::vector<SkeletonNode>::iterator rootIt = roots.begin();
+											rootIt != roots.end(); ++rootIt) {
+			rootIt->closestAnimationFit(xMin, xMax, yMin, yMax, zMin, zMax);
+		}
+	}
+}
+
+float Animation::getFigureSizeBox() {
+	if (figureSize == 0) { // no need to recalculate
+		// initial value
+		float mins [] = {0, 0, 0}; // we assume the origin is always in the picture
+		float maxs [] = {0, 0, 0}; // we assume the origin is always in the picture
+		for (std::vector<SkeletonNode>::iterator rootIt = roots.begin();
+											rootIt != roots.end(); ++rootIt) {
+			rootIt->offsetBounds(mins, maxs);
+		}
+		float diffs[3];
+		for (unsigned i = 0; i < 3; ++i) diffs[i] = (maxs[i] - mins[i]);
+		figureSize = (*std::max_element(diffs, diffs+3)) / 2;
+		figureSize -= 2; // technically we shouldn't do this.. but
+	}
+	return figureSize;
 }
 
 // timediff is in milliseconds!!

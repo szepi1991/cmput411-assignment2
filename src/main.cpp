@@ -20,8 +20,6 @@
 #include "Camera.h"
 #include "tools.h"
 
-#include "Matrix4x4.h"
-
 using namespace std;
 
 
@@ -54,13 +52,17 @@ void setup(int argc, char **argv) throw (int) {
 		anim.reset(new Animation(argv[1]));
 		cout << "The name of the loaded file is " << anim->getFileName() << endl;
 
-		cam.reset();
-		cam.translateCamera(-10, 10, 30);
+		float xMin, xMax, yMin, yMax, zMin, zMax;
+		anim->closestFit(xMin, xMax, yMin, yMax, zMin, zMax);
+
+		float extra = 2;
+		cam.makeVisible(xMin-extra, xMax+extra,
+				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 //		glFrustum(-1.0, 1.0, -1.0, 1.0, 1.0, 100.0);
-		gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), 1.0, 150);
+		gluPerspective(90, ((double)SCR_WIDTH)/((double)SCR_HEIGHT), cam.getNear(), cam.getFar());
 
 	} catch (ParseException& e) {
 		cerr << e.what() << endl;
@@ -76,6 +78,9 @@ void resize(int w, int h)
 {
 	// Set viewport size to be entire OpenGL window.
 	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective(90, ((float) w)/((float) h), cam.getNear(), cam.getFar());
 }
 
 
@@ -173,26 +178,26 @@ void animate(int arg) {
 
 
 void testCode() {
-	Matrix4x4<float> identity;
-	float vecf[] = { 1, 0, 2, -1};
-	cout << "identity" << endl;
-	identity.printMatrix();
-	cout << "vector" << endl;
-	identity.printVector(vecf);
-	identity.multVector(vecf);
-	cout << "multiplied" << endl;
-	identity.printVector(vecf);
-
-	double data[] = { 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 13, 14, 15, 16};
-	double vecd[] = { 1, 0, 2, -1};
-	Matrix4x4<double> matrix(data);
-	cout << "matrix" << endl;
-	matrix.printMatrix();
-	cout << "vector" << endl;
-	matrix.printVector(vecd);
-	cout << "multiplied" << endl;
-	matrix.multVector(vecd);
-	matrix.printVector(vecd);
+//	Matrix4x4<float> identity;
+//	float vecf[] = { 1, 0, 2, -1};
+//	cout << "identity" << endl;
+//	identity.printMatrix();
+//	cout << "vector" << endl;
+//	identity.printVector(vecf);
+//	identity.multVector(vecf);
+//	cout << "multiplied" << endl;
+//	identity.printVector(vecf);
+//
+//	double data[] = { 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 13, 14, 15, 16};
+//	double vecd[] = { 1, 0, 2, -1};
+//	Matrix4x4<double> matrix(data);
+//	cout << "matrix" << endl;
+//	matrix.printMatrix();
+//	cout << "vector" << endl;
+//	matrix.printVector(vecd);
+//	cout << "multiplied" << endl;
+//	matrix.multVector(vecd);
+//	matrix.printVector(vecd);
 }
 
 int main(int argc, char **argv) {

@@ -18,6 +18,7 @@ private:
 //	double upXP, upYP, upZP;
 
 	double cameraTrans[16];
+	float near, far;
 
 public:
 	Camera();
@@ -27,9 +28,14 @@ public:
 	bool control(unsigned char key);
 	void view();
 	void reset();
+	void makeVisible(float xMin, float xMax,
+						float yMin, float yMax, float zMin, float zMax);
 
 	void rotateCamera(double angle, double x, double y, double z);
 	void translateCamera(double x, double y, double z);
+
+	float getNear() { return near; }
+	float getFar() { return far; }
 };
 
 #endif /* CAMERA_H_ */

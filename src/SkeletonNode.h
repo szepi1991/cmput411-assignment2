@@ -15,7 +15,7 @@
 #include <fstream>
 #include <boost/array.hpp>
 
-struct MotionFrame {
+class MotionFrame {
 	// these can't be const since they are put in a vector where the elements
 	// need to be assignable, .. but they really should not be changed!
 private:
@@ -50,6 +50,8 @@ public:
 		}
 		out << zRot << " " << yRot << " " << xRot << " ";
 	}
+	static void closestFit(std::vector<MotionFrame> const & frames,
+			float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax);
 };
 
 class SkeletonNode {
@@ -84,6 +86,15 @@ public:
 			it->printFrameBVH(out, frame);
 		}
 	}
+
+	// enlarges the axis-aligned box defined by the parameters so that each translated
+	// point fits into the box
+	void closestAnimationFit(float& xMin, float& xMax,
+			float& yMin, float& yMax, float& zMin, float& zMax) {
+		// we assume only roots have translations!
+		MotionFrame::closestFit(motion, xMin, xMax, yMin, yMax, zMin, zMax);
+	}
+	void offsetBounds(float * mins, float * maxs);
 };
 
 #endif /* SKELETONNODE_H_ */

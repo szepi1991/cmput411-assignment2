@@ -191,6 +191,24 @@ void SkeletonNode::display(int frame = -1) {
 	glPopMatrix();
 }
 
+
+// x, y, z in both cases; this is a large upper bound!!
+void SkeletonNode::offsetBounds(float * mins, float * maxs) {
+	// add on my offsets
+	for (unsigned i = 0; i < 3; ++i) {
+		if (offset[i] < 0) {
+			mins[i] += offset[i];
+		} else {
+			maxs[i] += offset[i];
+		}
+	}
+	// call for children
+	for (std::vector<SkeletonNode>::iterator it = children.begin();
+											it != children.end(); ++it) {
+		it->offsetBounds(mins, maxs);
+	}
+}
+
 inline void printRepeated(std::ostream& out, unsigned reps, char const * pattern) {
 	for (unsigned i = 0; i < reps; ++i) out << pattern;
 }
@@ -282,6 +300,24 @@ void MotionFrame::printMatrix() {
 		std::cout << std::endl;
 	}
 }
+
+// enlarges the axis-aligned box defined by the parameters so that each translated
+// point fits into the box
+void MotionFrame::closestFit(std::vector<MotionFrame> const & frames,
+		float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax) {
+	for (std::vector<MotionFrame>::const_iterator it = frames.begin();
+			it != frames.end(); ++it) {
+		if (it->xPos < xMin) xMin = it->xPos;
+		if (it->xPos > xMax) xMax = it->xPos;
+		if (it->yPos < yMin) yMin = it->yPos;
+		if (it->yPos > yMax) yMax = it->yPos;
+		if (it->zPos < zMin) zMin = it->zPos;
+		if (it->zPos > zMax) zMax = it->zPos;
+	}
+}
+
+
+
 
 // applies the transformation matrix corresponding to this frame
 void MotionFrame::applyTransformation() {
