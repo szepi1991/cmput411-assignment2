@@ -15,6 +15,7 @@
 #include "SkeletonNode.h"
 #include "tools.h"
 
+#include <cmath>
 
 /* Recursively creates the skeleton based on the info in descr.
  * Reads out just as much info from the stream as needed.
@@ -114,7 +115,7 @@ SkeletonNode::SkeletonNode(boost::array<float, 3> const & offsets) {
 	channelNum = 0;
 }
 
-std::string SkeletonNode::getDescr() {
+std::string SkeletonNode::getDescr() const {
 	std::stringstream ss;
 	ss << name << "-" << myCounter;
 	return ss.str();
@@ -126,7 +127,7 @@ SkeletonNode::~SkeletonNode() {
 }
 
 /* If this is a leaf then it has no endpoint .. we throw 0 */
-boost::array<float, 3> SkeletonNode::getEndPoint() throw(int) {
+boost::array<float, 3> SkeletonNode::getEndPoint() const throw(int) {
 	if (children.size() == 0) throw 0;
 	else return children[0].offset;
 }
@@ -163,7 +164,7 @@ void SkeletonNode::addAnimationFrame(std::ifstream& descr) {
 
 /* Displays frame 'frame'. If the argument is -1, it displays the initial pose
  * (This is the default value). */
-void SkeletonNode::display(int frame = -1) {
+void SkeletonNode::display(double frame = -1) const {
 	if (children.size() == 0) return;
 
 	glPushMatrix();
@@ -171,7 +172,22 @@ void SkeletonNode::display(int frame = -1) {
 	glTranslatef(offset[0], offset[1], offset[2]);
 
 	if (frame >= 0) {
-		motion[frame].applyTransformation();
+		double intPart, fracPart;
+		fracPart = modf(frame, &intPart); // both positive since frame positive
+		unsigned curFrame = (unsigned) intPart;
+
+		// if almost integer just display frame
+		if (fracPart < 0.0001 || fracPart+0.0001 > 1) {
+			motion[curFrame].applyTransformation();
+		} else {
+			// interpolate between intPart and next (watch out far next = 0 case!!)
+			unsigned nextFrame = curFrame + 1;
+			if (nextFrame >= motion.size()) nextFrame = 0;
+			MotionFrame toUse(0, 0, 0); // just a fake one
+			motion[curFrame].interpolate(motion[nextFrame], fracPart, toUse);
+			toUse.applyTransformation();
+		}
+
 	}
 
 	boost::array<float, 3> endP = getEndPoint();
@@ -179,10 +195,6 @@ void SkeletonNode::display(int frame = -1) {
        glVertex3f(0.0f, 0.0f, 0.0f);
 	   glVertex3f(endP[0], endP[1], endP[2]);
     glEnd();
-//    if (DEBUG) {
-//        std::cout << "Draw line (0,0,0) --> ("
-//        		<< endP[0] << ", " << endP[1] << ", " << endP[2] << ")." << std::endl;
-//    }
 
     for (unsigned i = 0; i < children.size(); ++i) {
     	children[i].display(frame);
@@ -193,7 +205,7 @@ void SkeletonNode::display(int frame = -1) {
 
 
 // x, y, z in both cases; this is a large upper bound!!
-void SkeletonNode::offsetBounds(float * mins, float * maxs) {
+void SkeletonNode::offsetBounds(float * mins, float * maxs) const {
 	// add on my offsets
 	for (unsigned i = 0; i < 3; ++i) {
 		if (offset[i] < 0) {
@@ -203,7 +215,7 @@ void SkeletonNode::offsetBounds(float * mins, float * maxs) {
 		}
 	}
 	// call for children
-	for (std::vector<SkeletonNode>::iterator it = children.begin();
+	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 											it != children.end(); ++it) {
 		it->offsetBounds(mins, maxs);
 	}
@@ -216,14 +228,14 @@ inline void printRepeated(std::ostream& out, unsigned reps, char const * pattern
 /* Prints the names of the subtree rooted at this node, with level number of
  * "- " thingies in front of it.
  */
-void SkeletonNode::printNames(unsigned level) {
+void SkeletonNode::printNames(unsigned level) const {
 	printRepeated(std::cout, level, "- ");
 //	for (unsigned i = 0; i < level; ++i) std::cout << "- ";
 	std::cout << name << ": \t "
 			<< offset[0] << ", "
 			<< offset[1] << ", "
 			<< offset[2] << ", " << std::endl;
-	for (std::vector<SkeletonNode>::iterator it = children.begin();
+	for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 											it != children.end(); ++it) {
 		it->printNames(level+1);
 	}
@@ -234,7 +246,7 @@ void SkeletonNode::printNames(unsigned level) {
  *
  * This function prints ROOT/JOINT name { .... } (or change this appropriately for leaf)
  */
-void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) {
+void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) const {
 	printRepeated(out, level, "\t");
 	if (children.size() == 0) {
 		out << "End Site" << std::endl;
@@ -262,7 +274,7 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) {
 		}
 		// and we always have the rotations
 		out << "Zrotation Yrotation Xrotation" << std::endl;
-		for (std::vector<SkeletonNode>::iterator it = children.begin();
+		for (std::vector<SkeletonNode>::const_iterator it = children.begin();
 												it != children.end(); ++it) {
 			it->printTreeBVH(out, level); // level was already incremented
 		}
@@ -273,38 +285,11 @@ void SkeletonNode::printTreeBVH(std::ostream& out, unsigned level) {
 }
 
 
-// generates the transformation matrix for this frame
-void MotionFrame::genMatrix() {
-	// TODO later we need to use quarternions!!!!!!
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix(); // make a copy
-	glLoadIdentity(); // start from nothing
-	if (channels == 6) glTranslatef(xPos, yPos, zPos); // add new translation
-	glRotatef(zRot, 0.0, 0.0, 1.0);
-	glRotatef(yRot, 0.0, 1.0, 0.0);
-	glRotatef(xRot, 1.0, 0.0, 0.0);
-	glGetFloatv(GL_MODELVIEW_MATRIX, modelTrans); // save new rotation
-	glPopMatrix(); // reset modelview to original settings
-
-	if (DEBUG) printMatrix();
-
-}
-
-void MotionFrame::printMatrix() {
-	std::cout << std::fixed;
-	std::cout.precision(6);
-	for (int i = 0; i < 4; ++i) {
-		for (int j = 0; j < 4; ++j) {
-			std::cout << "\t" << modelTrans[i*4+j];
-		}
-		std::cout << std::endl;
-	}
-}
 
 // enlarges the axis-aligned box defined by the parameters so that each translated
 // point fits into the box
 void MotionFrame::closestFit(std::vector<MotionFrame> const & frames,
-		float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax) {
+		float& xMin, float& xMax, float& yMin, float& yMax, float& zMin, float& zMax)  {
 	for (std::vector<MotionFrame>::const_iterator it = frames.begin();
 			it != frames.end(); ++it) {
 		if (it->xPos < xMin) xMin = it->xPos;
@@ -317,10 +302,64 @@ void MotionFrame::closestFit(std::vector<MotionFrame> const & frames,
 }
 
 
+// interpolates between this frame and nextFrame. We are fracPart into the next frame
+// simply put the calculated new semi-frame into ret
+void MotionFrame::interpolate(MotionFrame const & nextFrame, double fracPart, MotionFrame & ret) const {
+	// first calculate the position:
+	double o = 1-fracPart;
+	ret.xPos = fracPart * nextFrame.xPos + o * xPos;
+	ret.yPos = fracPart * nextFrame.yPos + o * yPos;
+	ret.zPos = fracPart * nextFrame.zPos + o * zPos;
+
+	// now calculate the interpolated angle
+	Quaternion::slerp(rotations, nextFrame.rotations, fracPart, ret.rotations);
+
+	// now just update the modelTrans of ret:
+	ret.rotations.getRotation(ret.modelTrans);
+	if (channels == 6) {
+		ret.modelTrans[12] = ret.xPos;
+		ret.modelTrans[13] = ret.yPos;
+		ret.modelTrans[14] = ret.zPos;
+	}
+}
+
+// generates the transformation matrix for this frame
+void MotionFrame::genMatrix() {
+	// we now use Quaternions!!!!!!
+//	glMatrixMode(GL_MODELVIEW);
+//	glPushMatrix(); // make a copy
+//	glLoadIdentity(); // start from nothing
+//	if (channels == 6) glTranslatef(xPos, yPos, zPos); // add new translation
+//	glRotatef(zRot, 0.0, 0.0, 1.0);
+//	glRotatef(yRot, 0.0, 1.0, 0.0);
+//	glRotatef(xRot, 1.0, 0.0, 0.0);
+//	glGetFloatv(GL_MODELVIEW_MATRIX, modelTrans); // save new rotation
+//	glPopMatrix(); // reset modelview to original settings
+
+	// Quaternion stuff
+	Quaternion    rot(degToRad(zRot), 0, 0, 1);
+	rot *= Quaternion(degToRad(yRot), 0, 1, 0);
+	rot *= Quaternion(degToRad(xRot), 1, 0, 0);
+	rot.getRotation(modelTrans);
+	if (channels == 6) {
+		modelTrans[12] = xPos;
+		modelTrans[13] = yPos;
+		modelTrans[14] = zPos;
+	}
+	rotations = rot;
+
+	if (DEBUG) print4x4Matrix(modelTrans);
+//	if (DEBUG) print4x4Matrix(fromQ);
+//
+//	if (DEBUG) {
+//		assert ( same4x4Matrix(fromQ, modelTrans) );
+//	}
+
+}
 
 
 // applies the transformation matrix corresponding to this frame
-void MotionFrame::applyTransformation() {
+void MotionFrame::applyTransformation() const {
 	glMultMatrixf(modelTrans);
 }
 

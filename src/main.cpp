@@ -20,6 +20,8 @@
 #include "Camera.h"
 #include "tools.h"
 
+#include "Quaternion.h"
+
 using namespace std;
 
 
@@ -55,7 +57,7 @@ void setup(int argc, char **argv) throw (int) {
 		float xMin, xMax, yMin, yMax, zMin, zMax;
 		anim->closestFit(xMin, xMax, yMin, yMax, zMin, zMax);
 
-		float extra = 2;
+		float extra = 2; // TODO maybe baesd on figure size? (our upper bound is too big)
 		cam.makeVisible(xMin-extra, xMax+extra,
 				yMin-extra, yMax+extra, zMin-extra, zMax+extra);
 
@@ -178,6 +180,10 @@ void animate(int arg) {
 
 
 void testCode() {
+
+//	Quaternion q1(PI/2, 1, 0, 0);
+//	q1.printRotMatrix();
+
 //	Matrix4x4<float> identity;
 //	float vecf[] = { 1, 0, 2, -1};
 //	cout << "identity" << endl;

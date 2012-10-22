@@ -80,8 +80,9 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	stdFPS = floor((1.0 / stdFrameTime) + 0.5);
 	virtFPS = stdFPS;
 
-	curFrameWhole = -1;
-	curFrameFrac = curFrameWhole;
+//	curFrameWhole = -1;
+//	curFrameFrac = curFrameWhole;
+	curFrameFrac = -1;
 }
 
 Animation::~Animation() {
@@ -135,20 +136,18 @@ void Animation::addToTime(double timeDiff) {
 	while (curFrameFrac > frameNum) curFrameFrac -= frameNum; // TODO make it >= ?
 	while (curFrameFrac < 0) curFrameFrac += frameNum; // so negative case is also handled
 
-	// figure out which real frame this corresponds to:
-	// TODO at this point we ask for an actual frame.. later this will not be like this (interpolate!)
-	curFrameWhole = ( curFrameFrac ) + 0.5;
-
-	// it might happen that due to rounding curFrame == frameNum.. make it go back to 0
-	if (curFrameWhole == frameNum) curFrameWhole = 0;
-
-	assert (curFrameWhole < frameNum);
+//	// figure out which real frame this corresponds to:
+//	curFrameWhole = ( curFrameFrac ) + 0.5;
+//	// it might happen that due to rounding curFrame == frameNum.. make it go back to 0
+//	if (curFrameWhole == frameNum) curFrameWhole = 0;
+//	assert (curFrameWhole < frameNum);
 }
 
 // reset to initial pose
 void Animation::reset() {
 	animating = false;
-	curFrameWhole = -1; curFrameFrac = -1;
+//	curFrameWhole = -1;
+	curFrameFrac = -1;
 	virtFPS = stdFPS;
 }
 
@@ -187,9 +186,12 @@ void Animation::display() {
 	}
 	lastTime = curTime;
 
-	if (DEBUG) std::cout << "Drawing Frame " << curFrameWhole << std::endl;
+//	if (DEBUG) std::cout << "Drawing Frame " << curFrameWhole << std::endl;
+//	for (unsigned i = 0; i < roots.size(); ++i)
+//		roots[i].display(curFrameWhole);
+	if (DEBUG) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
-		roots[i].display(curFrameWhole);
+		roots[i].display(curFrameFrac);
 }
 
 
