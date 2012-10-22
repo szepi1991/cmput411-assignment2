@@ -26,7 +26,6 @@ private:
 	double stdFrameTime; // in seconds
 
 	double curFrameFrac; // which frame are we at exactly
-//	int curFrameWhole; // basically curFrameFrac rounded
 
 	bool animating;
 	double stdFPS;
@@ -50,7 +49,6 @@ public:
 		animating = true;
 		if (curFrameFrac == -1) { // we mean to compare unsigned and signed here
 			// if we are in the inital state get out of it artificially first!
-//			curFrameWhole = 0;
 			curFrameFrac = 0;
 		}
 		lastTime = boost::posix_time::microsec_clock::universal_time();

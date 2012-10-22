@@ -34,9 +34,6 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	}
 	// now description starts
 	infile >> word;
-//	assert( word.compare("ROOT") == 0 );
-//	root.reset(new SkeletonNode(infile))
-//	unsigned rootNum = 0;
 	while (word.compare("ROOT") == 0) {
 		roots.push_back(SkeletonNode(infile));
 		std::cout << "The tree structure we read in is:" << std::endl;
@@ -46,6 +43,8 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 
 	if (word.compare("MOTION") != 0)
 		throw ParseException("MOTION", word);
+
+	std::cout << "Loading the animation description." << std::endl;
 
 	// parse the motion stuff
 	infile >> word;
@@ -74,6 +73,7 @@ Animation::Animation(char *filename) throw(ParseException) : figureSize(0) {
 	}
 	infile.close();
 
+	std::cout << "Finished." << std::endl;
 	this->filename = filename;
 	animating = false;
 
@@ -128,7 +128,7 @@ float Animation::getFigureSizeBox() {
 
 // timediff is in milliseconds!!
 void Animation::addToTime(double timeDiff) {
-	if (DEBUG) 	std::cout << "Elapsed time (ms): " << timeDiff << std::endl;
+	if (MYINFO) 	std::cout << "Elapsed time (ms): " << timeDiff << std::endl;
 	timeDiff /= SECtoMSEC; // now timeDiff is in seconds
 
 	// calculate which frame we moved ahead to - depends on virtual fps
@@ -136,17 +136,11 @@ void Animation::addToTime(double timeDiff) {
 	while (curFrameFrac > frameNum) curFrameFrac -= frameNum; // TODO make it >= ?
 	while (curFrameFrac < 0) curFrameFrac += frameNum; // so negative case is also handled
 
-//	// figure out which real frame this corresponds to:
-//	curFrameWhole = ( curFrameFrac ) + 0.5;
-//	// it might happen that due to rounding curFrame == frameNum.. make it go back to 0
-//	if (curFrameWhole == frameNum) curFrameWhole = 0;
-//	assert (curFrameWhole < frameNum);
 }
 
 // reset to initial pose
 void Animation::reset() {
 	animating = false;
-//	curFrameWhole = -1;
 	curFrameFrac = -1;
 	virtFPS = stdFPS;
 }
@@ -186,10 +180,7 @@ void Animation::display() {
 	}
 	lastTime = curTime;
 
-//	if (DEBUG) std::cout << "Drawing Frame " << curFrameWhole << std::endl;
-//	for (unsigned i = 0; i < roots.size(); ++i)
-//		roots[i].display(curFrameWhole);
-	if (DEBUG) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
+	if (MYINFO) std::cout << "Drawing Frame " << curFrameFrac << std::endl;
 	for (unsigned i = 0; i < roots.size(); ++i)
 		roots[i].display(curFrameFrac);
 }

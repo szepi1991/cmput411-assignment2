@@ -50,7 +50,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 		name = "no-name";
 	}
 
-	if (DEBUG)
+	if (MYINFO)
 		std::cout << "Parsing joint " << getDescr() << std::endl;
 
 	descr >> token;
@@ -109,7 +109,7 @@ SkeletonNode::SkeletonNode(std::ifstream& descr) throw(ParseException) {
 SkeletonNode::SkeletonNode(boost::array<float, 3> const & offsets) {
 	myCounter = nodeCounter++;
 	name = "leaf";
-	if (DEBUG)
+	if (MYINFO)
 		std::cout << "Created " << getDescr() << std::endl;
 	offset = offsets;
 	channelNum = 0;
@@ -122,7 +122,7 @@ std::string SkeletonNode::getDescr() const {
 }
 
 SkeletonNode::~SkeletonNode() {
-	if (DEBUG)
+	if (MYINFO)
 		std::cout << getDescr() << " is now dying." << std::endl;
 }
 
@@ -144,7 +144,7 @@ void SkeletonNode::addAnimationFrame(std::ifstream& descr) {
 	}
 	double xRot, yRot, zRot;
 	descr >> zRot >> yRot >> xRot;
-	if (DEBUG) std::cout << "Transformation matrix " << getDescr() << ", frame " << motion.size() << std::endl;
+	if (MYINFO) std::cout << "Transformation matrix " << getDescr() << ", frame " << motion.size() << std::endl;
 	if (channelNum == 6) {
 		motion.push_back(MotionFrame(zRot, yRot, xRot, xPos, yPos, zPos));
 	} else if (channelNum == 3) {
@@ -183,7 +183,7 @@ void SkeletonNode::display(double frame = -1) const {
 			// interpolate between intPart and next (watch out far next = 0 case!!)
 			unsigned nextFrame = curFrame + 1;
 			if (nextFrame >= motion.size()) nextFrame = 0;
-			MotionFrame toUse(0, 0, 0); // just a fake one
+			MotionFrame toUse;
 			motion[curFrame].interpolate(motion[nextFrame], fracPart, toUse);
 			toUse.applyTransformation();
 		}
@@ -325,16 +325,6 @@ void MotionFrame::interpolate(MotionFrame const & nextFrame, double fracPart, Mo
 
 // generates the transformation matrix for this frame
 void MotionFrame::genMatrix() {
-	// we now use Quaternions!!!!!!
-//	glMatrixMode(GL_MODELVIEW);
-//	glPushMatrix(); // make a copy
-//	glLoadIdentity(); // start from nothing
-//	if (channels == 6) glTranslatef(xPos, yPos, zPos); // add new translation
-//	glRotatef(zRot, 0.0, 0.0, 1.0);
-//	glRotatef(yRot, 0.0, 1.0, 0.0);
-//	glRotatef(xRot, 1.0, 0.0, 0.0);
-//	glGetFloatv(GL_MODELVIEW_MATRIX, modelTrans); // save new rotation
-//	glPopMatrix(); // reset modelview to original settings
 
 	// Quaternion stuff
 	Quaternion    rot(degToRad(zRot), 0, 0, 1);
@@ -348,12 +338,7 @@ void MotionFrame::genMatrix() {
 	}
 	rotations = rot;
 
-	if (DEBUG) print4x4Matrix(modelTrans);
-//	if (DEBUG) print4x4Matrix(fromQ);
-//
-//	if (DEBUG) {
-//		assert ( same4x4Matrix(fromQ, modelTrans) );
-//	}
+	if (MYINFO) print4x4Matrix(modelTrans);
 
 }
 

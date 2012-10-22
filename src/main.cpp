@@ -124,7 +124,7 @@ void drawScene(void)
 
 	cam.view();
 
-	if (DEBUG) drawAxes(10);
+	if (MYINFO) drawAxes(10);
 
 	// Set stickman color.
 	glColor3f(0.0, 0.0, 0.0);

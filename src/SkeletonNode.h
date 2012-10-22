@@ -26,7 +26,11 @@ private:
 	float modelTrans[16]; // all transformations of model -- in matrix format
 	Quaternion rotations;
 
+
 public:
+
+	// in general don't use this one.. leaves the frame in undefined state
+	MotionFrame() {};
 
 	MotionFrame(double zRot, double yRot, double xRot,
 			double xPos, double yPos, double zPos) :

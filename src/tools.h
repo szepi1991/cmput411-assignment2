@@ -16,8 +16,8 @@
 #include <iostream>
 
 
-#define DEBUG true
-#define SECtoMSEC 1000.0f // TODO reset it to normal speed!!
+#define MYINFO false
+#define SECtoMSEC 1000.0f // normal speed
 //#define SECtoMSEC 10000.0f
 
 #define PI 3.14159265359
